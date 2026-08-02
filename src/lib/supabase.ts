@@ -54,6 +54,15 @@ export interface ProposalWithFactory extends Proposal {
   factory: { full_name: string; company_name: string } | null;
 }
 
+export interface Message {
+  id: string;
+  order_id: string;
+  factory_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+}
+
 export interface OrderWithCount extends Order {
   customer: { full_name: string; company_name: string } | null;
   proposal_count: number;
