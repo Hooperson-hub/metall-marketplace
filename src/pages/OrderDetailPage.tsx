@@ -3,7 +3,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useHashRoute } from '@/lib/router';
 import { supabase, type Order, type ProposalWithFactory } from '@/lib/supabase';
 import { ProcessBadge, MaterialBadge, OrderStatusBadge, ProposalStatusBadge, formatDate } from '@/components/Badges';
-import { FileText, ArrowLeft, Download, Check, X, Send, Clock, User } from 'lucide-react';
+import { FileText, ArrowLeft, Download, Check, X, Send, Clock, User, MessageCircle } from 'lucide-react';
+import { ChatPanel } from '@/components/ChatPanel';
 
 export function OrderDetailPage({ orderId }: { orderId: string }) {
   const { profile } = useAuth();
@@ -20,6 +21,7 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeChatFactoryId, setActiveChatFactoryId] = useState<string | null>(null);
 
   const isCustomer = profile?.role === 'customer';
   const isFactory = profile?.role === 'factory';
@@ -287,6 +289,18 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
         </div>
       )}
 
+      {/* Factory: chat with the customer, available once a proposal exists */}
+      {isFactory && myProposal && profile && (
+        <div className="mt-6">
+          <ChatPanel
+            orderId={orderId}
+            factoryId={profile.id}
+            currentUserId={profile.id}
+            title={`Чат с заказчиком · ${customer?.company_name || customer?.full_name || ''}`}
+          />
+        </div>
+      )}
+
       {/* Proposals list (customer sees all, factory sees all) */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold text-slate-900">
@@ -328,6 +342,19 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
                       <p className="text-xl font-bold text-slate-900">{Number(p.price).toLocaleString('ru-RU')} ₽</p>
                       <p className="text-sm text-slate-500">{p.lead_time_days} дн.</p>
                     </div>
+                    {isCustomer && (
+                      <button
+                        onClick={() => setActiveChatFactoryId((prev) => (prev === p.factory_id ? null : p.factory_id))}
+                        className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition ${
+                          activeChatFactoryId === p.factory_id
+                            ? 'border-slate-900 bg-slate-900 text-white'
+                            : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Чат
+                      </button>
+                    )}
                     {isCustomer && order.status === 'open' && p.status === 'submitted' && (
                       <div className="flex gap-1">
                         <button
@@ -353,6 +380,18 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
           </div>
         )}
       </div>
+
+      {isCustomer && activeChatFactoryId && profile && (
+        <div className="mt-6">
+          <ChatPanel
+            orderId={orderId}
+            factoryId={activeChatFactoryId}
+            currentUserId={profile.id}
+            title={`Чат · ${proposals.find((p) => p.factory_id === activeChatFactoryId)?.factory?.company_name || 'Завод'}`}
+            onClose={() => setActiveChatFactoryId(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }
