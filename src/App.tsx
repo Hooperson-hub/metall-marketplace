@@ -14,7 +14,7 @@ function Router() {
   const { session, profile, loading } = useAuth();
 
   // Redirect signed-in users away from landing/auth pages
-  if (!loading && session && (path === '/' || path === '/signin' || path === '/signup')) {
+  if (!loading && session && (path === '/' || path === '/signin' || path === '/signup' || path === '/signup/customer' || path === '/signup/factory')) {
     const target: string = profile?.role === 'factory' ? '/factory' : '/dashboard';
     navigate(target);
     return null;
@@ -24,8 +24,9 @@ function Router() {
 
   if (path === '/' || path === '') {
     page = <LandingPage />;
-  } else if (path === '/signup') {
-    page = <SignUpPage />;
+  } else if (path === '/signup' || path === '/signup/customer' || path === '/signup/factory') {
+    const initialRole = path === '/signup/factory' ? 'factory' : 'customer';
+    page = <SignUpPage initialRole={initialRole} />;
   } else if (path === '/signin') {
     page = <SignInPage />;
   } else if (path === '/dashboard') {
@@ -53,10 +54,12 @@ function Router() {
       </ProtectedRoute>
     );
   } else if (path.startsWith('/orders/')) {
-    const orderId = path.split('/')[2];
+    const segments = path.split('/');
+    const orderId = segments[2];
+    const initialChatFactoryId = segments[3] === 'chat' ? segments[4] : undefined;
     page = (
       <ProtectedRoute>
-        <OrderDetailPage orderId={orderId} />
+        <OrderDetailPage orderId={orderId} initialChatFactoryId={initialChatFactoryId} />
       </ProtectedRoute>
     );
   } else if (path === '/download') {
@@ -109,3 +112,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+
