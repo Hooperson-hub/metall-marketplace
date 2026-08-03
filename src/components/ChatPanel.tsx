@@ -25,38 +25,42 @@ export function ChatPanel({ orderId, factoryId, currentUserId, title, onClose }:
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('order_id', orderId)
-        .eq('factory_id', factoryId)
-        .order('created_at', { ascending: true });
-      if (!cancelled) {
-        setMessages((data || []) as Message[]);
-        setLoading(false);
-      }
-    })();
-
-    const channel = supabase
-      .channel(`messages-${orderId}-${factoryId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `order_id=eq.${orderId}` },
-        (payload) => {
-          const msg = payload.new as Message;
-          if (msg.factory_id !== factoryId) return;
-          setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+    async function load(showSpinner: boolean) {
+      if (showSpinner) setLoading(true);
+      try {
+        const { data } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('order_id', orderId)
+          .eq('factory_id', factoryId)
+          .order('created_at', { ascending: true });
+        if (!cancelled) {
+          const rows = (data || []) as Message[];
+          setMessages(rows);
+          const unreadIds = rows.filter((m) => m.sender_id !== currentUserId && !m.read_at).map((m) => m.id);
+          if (unreadIds.length > 0) {
+            supabase.from('messages').update({ read_at: new Date().toISOString() }).in('id', unreadIds).then();
+          }
         }
-      )
-      .subscribe();
+      } catch {
+        // Silently retry on the next poll tick — a transient network blip
+        // shouldn't wipe out messages already shown.
+      } finally {
+        if (!cancelled && showSpinner) setLoading(false);
+      }
+    }
+
+    load(true);
+    // Regular HTTP polling instead of a persistent WebSocket connection —
+    // more resilient on unstable/restricted networks than Realtime, which
+    // relies on a long-lived connection that gets reset more easily.
+    const interval = setInterval(() => load(false), 4000);
 
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, [orderId, factoryId]);
+  }, [orderId, factoryId, currentUserId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -69,19 +73,25 @@ export function ChatPanel({ orderId, factoryId, currentUserId, title, onClose }:
     setSending(true);
     setError(null);
     setText('');
-    const { data, error: sendErr } = await supabase
-      .from('messages')
-      .insert({ order_id: orderId, factory_id: factoryId, sender_id: currentUserId, content })
-      .select()
-      .single();
-    setSending(false);
-    if (sendErr) {
-      setError('Не удалось отправить сообщение: ' + sendErr.message);
+    try {
+      const { data, error: sendErr } = await supabase
+        .from('messages')
+        .insert({ order_id: orderId, factory_id: factoryId, sender_id: currentUserId, content })
+        .select()
+        .single();
+      if (sendErr) {
+        setError('Не удалось отправить сообщение: ' + sendErr.message);
+        setText(content);
+        return;
+      }
+      // Insert locally too — the next poll tick will pick it up either way
+      setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data as Message]));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось связаться с сервером. Проверьте интернет-соединение и попробуйте снова.');
       setText(content);
-      return;
+    } finally {
+      setSending(false);
     }
-    // Insert locally too in case the realtime event is delayed
-    setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data as Message]));
   }
 
   return (
