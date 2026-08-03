@@ -95,7 +95,11 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
     });
     setSubmitting(false);
     if (error) {
-      setError(error.message);
+      setError(
+        error.code === '23505'
+          ? 'Вы уже отправляли предложение по этому заказу — повторно откликнуться нельзя.'
+          : error.message
+      );
       return;
     }
     // reload proposals
@@ -423,3 +427,4 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
     </div>
   );
 }
+
