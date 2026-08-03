@@ -301,19 +301,21 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
         </div>
       )}
 
-      {/* Proposals list (customer sees all, factory sees all) */}
+      {/* Proposals list — only the customer needs to compare offers; a factory
+          only ever gets its own row back now (see RLS), and already has its
+          own proposal card + chat above, so showing it again here would be
+          redundant and the old "все предложения" heading would be misleading. */}
+      {isCustomer && (
       <div className="mt-6">
         <h2 className="text-lg font-semibold text-slate-900">
-          {isCustomer ? 'Коммерческие предложения' : 'Все предложения по заказу'}
+          Коммерческие предложения
           <span className="ml-2 text-sm font-normal text-slate-500">({proposals.length})</span>
         </h2>
 
         {proposals.length === 0 ? (
           <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white py-12 text-center">
             <Clock className="mx-auto h-10 w-10 text-slate-300" />
-            <p className="mt-3 text-sm text-slate-500">
-              {isCustomer ? 'Предложения ещё не поступили' : 'Пока нет предложений'}
-            </p>
+            <p className="mt-3 text-sm text-slate-500">Предложения ещё не поступили</p>
           </div>
         ) : (
           <div className="mt-4 space-y-3">
@@ -380,6 +382,7 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
           </div>
         )}
       </div>
+      )}
 
       {isCustomer && activeChatFactoryId && profile && (
         <div className="mt-6">
