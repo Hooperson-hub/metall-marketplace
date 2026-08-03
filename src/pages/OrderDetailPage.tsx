@@ -6,7 +6,7 @@ import { ProcessBadge, MaterialBadge, OrderStatusBadge, ProposalStatusBadge, for
 import { FileText, ArrowLeft, Download, Check, X, Send, Clock, User, MessageCircle } from 'lucide-react';
 import { ChatPanel } from '@/components/ChatPanel';
 
-export function OrderDetailPage({ orderId }: { orderId: string }) {
+export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: string; initialChatFactoryId?: string }) {
   const { profile } = useAuth();
   const { navigate } = useHashRoute();
   const [order, setOrder] = useState<Order | null>(null);
@@ -14,6 +14,7 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
   const [proposals, setProposals] = useState<ProposalWithFactory[]>([]);
   const [loading, setLoading] = useState(true);
   const [myProposal, setMyProposal] = useState<ProposalWithFactory | null>(null);
+  const [unreadByFactory, setUnreadByFactory] = useState<Record<string, number>>({});
 
   // proposal form
   const [price, setPrice] = useState('');
@@ -21,7 +22,7 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeChatFactoryId, setActiveChatFactoryId] = useState<string | null>(null);
+  const [activeChatFactoryId, setActiveChatFactoryId] = useState<string | null>(initialChatFactoryId || null);
 
   const isCustomer = profile?.role === 'customer';
   const isFactory = profile?.role === 'factory';
@@ -59,6 +60,22 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
       if (isFactory && profile) {
         setMyProposal(props.find((p) => p.factory_id === profile.id) || null);
       }
+
+      if (profile?.role === 'customer') {
+        const { data: unreadData } = await supabase
+          .from('messages')
+          .select('factory_id')
+          .eq('order_id', orderId)
+          .is('read_at', null)
+          .neq('sender_id', profile.id);
+        const counts: Record<string, number> = {};
+        for (const row of (unreadData || []) as { factory_id: string }[]) {
+          counts[row.factory_id] = (counts[row.factory_id] || 0) + 1;
+        }
+        if (initialChatFactoryId) counts[initialChatFactoryId] = 0;
+        setUnreadByFactory(counts);
+      }
+
       setLoading(false);
     })();
   }, [orderId, profile, isFactory]);
@@ -346,8 +363,11 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
                     </div>
                     {isCustomer && (
                       <button
-                        onClick={() => setActiveChatFactoryId((prev) => (prev === p.factory_id ? null : p.factory_id))}
-                        className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition ${
+                        onClick={() => {
+                          setActiveChatFactoryId((prev) => (prev === p.factory_id ? null : p.factory_id));
+                          setUnreadByFactory((prev) => ({ ...prev, [p.factory_id]: 0 }));
+                        }}
+                        className={`relative flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition ${
                           activeChatFactoryId === p.factory_id
                             ? 'border-slate-900 bg-slate-900 text-white'
                             : 'border-slate-300 text-slate-600 hover:bg-slate-50'
@@ -355,6 +375,11 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
                       >
                         <MessageCircle className="h-4 w-4" />
                         Чат
+                        {!!unreadByFactory[p.factory_id] && (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                            {unreadByFactory[p.factory_id]}
+                          </span>
+                        )}
                       </button>
                     )}
                     {isCustomer && order.status === 'open' && p.status === 'submitted' && (
