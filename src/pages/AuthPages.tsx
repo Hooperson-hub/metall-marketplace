@@ -4,11 +4,11 @@ import { useHashRoute } from '@/lib/router';
 import type { UserRole } from '@/lib/supabase';
 import { Factory, ShoppingCart, Check } from 'lucide-react';
 
-export function SignUpPage() {
+export function SignUpPage({ initialRole }: { initialRole?: UserRole }) {
   const { signUp } = useAuth();
   const { navigate } = useHashRoute();
 
-  const [role, setRole] = useState<UserRole>('customer');
+  const [role, setRole] = useState<UserRole>(initialRole || 'customer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -16,18 +16,46 @@ export function SignUpPage() {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const { error } = await signUp({ email, password, role, companyName, fullName, phone });
-    setSubmitting(false);
-    if (error) {
-      setError(error);
-    } else {
-      navigate(role === 'customer' ? '/dashboard' : '/factory');
+    try {
+      const { error, needsEmailConfirmation } = await signUp({ email, password, role, companyName, fullName, phone });
+      if (error) {
+        setError(error);
+      } else if (needsEmailConfirmation) {
+        setNeedsConfirmation(true);
+      } else {
+        navigate(role === 'customer' ? '/dashboard' : '/factory');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось связаться с сервером. Проверьте интернет-соединение и попробуйте снова.');
+    } finally {
+      setSubmitting(false);
     }
+  }
+
+  if (needsConfirmation) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 sm:px-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-slate-900">Проверьте почту</h1>
+          <p className="mt-3 text-sm text-slate-500">
+            Мы отправили письмо на <span className="font-medium text-slate-700">{email}</span>. Перейдите по ссылке
+            в письме, чтобы подтвердить аккаунт и войти.
+          </p>
+          <button
+            onClick={() => navigate('/signin')}
+            className="mt-6 font-semibold text-slate-900 hover:underline"
+          >
+            К странице входа
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -180,13 +208,18 @@ export function SignInPage() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const { error } = await signIn(email, password);
-    setSubmitting(false);
-    if (error) {
-      setError(error);
-    } else {
-      // The auth state change will redirect via the route guard, but push to a default
-      navigate('/dashboard');
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        setError(error);
+      } else {
+        // The auth state change will redirect via the route guard, but push to a default
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось связаться с сервером. Проверьте интернет-соединение и попробуйте снова.');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -253,3 +286,4 @@ function Field({ label, required, children }: { label: string; required?: boolea
     </div>
   );
 }
+
