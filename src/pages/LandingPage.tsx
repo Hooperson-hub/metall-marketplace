@@ -25,19 +25,26 @@ export function LandingPage() {
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/signup/customer')}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-base font-semibold text-slate-900 transition hover:bg-slate-100"
               >
-                Начать бесплатно
+                Я заказчик — разместить заказ
                 <ArrowRight className="h-5 w-5" />
               </button>
               <button
-                onClick={() => navigate('/signin')}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-3.5 text-base font-semibold text-white transition hover:bg-slate-800"
+                onClick={() => navigate('/signup/factory')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600 px-6 py-3.5 text-base font-semibold text-white transition hover:bg-slate-800"
               >
-                Войти в кабинет
+                Я завод — принимать заказы
+                <ArrowRight className="h-5 w-5" />
               </button>
             </div>
+            <button
+              onClick={() => navigate('/signin')}
+              className="mt-4 text-sm font-medium text-slate-400 transition hover:text-white"
+            >
+              Уже есть аккаунт? Войти в кабинет
+            </button>
           </div>
         </div>
       </section>
@@ -118,15 +125,25 @@ export function LandingPage() {
           <p className="mt-4 text-lg text-slate-300">
             Присоединяйтесь к платформе и получите предложения от заводов уже сегодня
           </p>
-          <button
-            onClick={() => navigate('/signup')}
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-base font-semibold text-slate-900 transition hover:bg-slate-100"
-          >
-            Создать аккаунт
-            <ArrowRight className="h-5 w-5" />
-          </button>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <button
+              onClick={() => navigate('/signup/customer')}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-base font-semibold text-slate-900 transition hover:bg-slate-100"
+            >
+              Я заказчик
+              <ArrowRight className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => navigate('/signup/factory')}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600 px-6 py-3.5 text-base font-semibold text-white transition hover:bg-slate-800"
+            >
+              Я завод
+              <ArrowRight className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </section>
     </div>
   );
 }
+
