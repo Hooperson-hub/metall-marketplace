@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useHashRoute } from '@/lib/router';
 import { supabase } from '@/lib/supabase';
 import { Factory, LogOut, User, Plus, LayoutDashboard, FileText } from 'lucide-react';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export function Navbar() {
   const { profile, signOut } = useAuth();
@@ -46,6 +47,7 @@ export function Navbar() {
                 </NavButton>
               </>
             )}
+            <NotificationBell />
             <div className="mx-1 hidden items-center gap-2 rounded-lg px-3 py-1.5 sm:flex">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
                 <User className="h-4 w-4 text-slate-600" />
