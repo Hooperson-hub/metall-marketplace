@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useHashRoute } from '@/lib/router';
 import { supabase } from '@/lib/supabase';
@@ -111,10 +111,18 @@ function NavButton({
 }
 
 export function ProtectedRoute({ children, role }: { children: ReactNode; role?: 'customer' | 'factory' }) {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, signOut } = useAuth();
   const { navigate } = useHashRoute();
 
-  if (loading) {
+  const wrongRole = !!role && !!profile && profile.role !== role;
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) navigate('/signin');
+    else if (wrongRole) navigate(profile!.role === 'customer' ? '/dashboard' : '/factory');
+  }, [loading, session, wrongRole, profile, navigate]);
+
+  if (loading || !session || wrongRole) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900" />
@@ -122,14 +130,16 @@ export function ProtectedRoute({ children, role }: { children: ReactNode; role?:
     );
   }
 
-  if (!session) {
-    navigate('/signin');
-    return null;
-  }
-
-  if (role && profile?.role !== role) {
-    navigate(profile?.role === 'customer' ? '/dashboard' : '/factory');
-    return null;
+  if (!profile) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <p className="text-lg font-semibold text-slate-900">Не удалось загрузить профиль</p>
+        <p className="mt-2 text-sm text-slate-500">Попробуйте обновить страницу или войти заново.</p>
+        <button onClick={signOut} className="mt-4 text-sm font-semibold text-slate-900 hover:underline">
+          Выйти
+        </button>
+      </div>
+    );
   }
 
   return <>{children}</>;

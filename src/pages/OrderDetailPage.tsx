@@ -125,7 +125,17 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
       setError(error.message);
       return;
     }
-    setProposals((prev) => prev.map((p) => p.id === proposalId ? { ...p, status } : p));
+    setProposals((prev) =>
+      prev.map((p) => {
+        if (p.id === proposalId) return { ...p, status };
+        // На стороне БД остальные предложения автоматически отклоняются, а заказ закрывается
+        if (status === 'accepted' && p.status === 'submitted') return { ...p, status: 'rejected' };
+        return p;
+      })
+    );
+    if (status === 'accepted') {
+      setOrder((prev) => (prev ? { ...prev, status: 'closed' } : prev));
+    }
   }
 
   async function handleCloseOrder() {

@@ -6,7 +6,7 @@ interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (params: SignUpParams) => Promise<{ error: string | null }>;
+  signUp: (params: SignUpParams) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
+        emailRedirectTo: window.location.origin,
         data: {
           role,
           company_name: companyName,
@@ -74,15 +75,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (error) return { error: error.message };
+    // Если в Supabase включено подтверждение почты, сессии ещё нет
+    if (!data.session) {
+      return { error: null, needsEmailConfirmation: true };
+    }
     if (data.user) {
       await loadProfile(data.user.id);
     }
-    return { error: null };
+    return { error: null, needsEmailConfirmation: false };
   }
 
   async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      return {
+        error: error.message === 'Invalid login credentials' ? 'Неверный email или пароль' : error.message,
+      };
+    }
+    if (data.user) await loadProfile(data.user.id);
     return { error: null };
   }
 
