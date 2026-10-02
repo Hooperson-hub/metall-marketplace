@@ -32,7 +32,7 @@ export function CustomerDashboard() {
     })();
   }, [profile]);
 
-  const openCount = orders.filter((o) => o.status === 'open').length;
+  const openCount = orders.filter((o) => o.status === 'open' || o.status === 'in_progress').length;
   const totalProposals = orders.reduce((sum, o) => sum + o.proposal_count, 0);
 
   return (
@@ -56,7 +56,7 @@ export function CustomerDashboard() {
       {/* Stats */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <StatCard icon={<Package className="h-5 w-5" />} value={orders.length} label="Всего заказов" />
-        <StatCard icon={<Inbox className="h-5 w-5" />} value={openCount} label="Открытых" />
+        <StatCard icon={<Inbox className="h-5 w-5" />} value={openCount} label="Активных" />
         <StatCard icon={<FileText className="h-5 w-5" />} value={totalProposals} label="Получено КП" />
       </div>
 

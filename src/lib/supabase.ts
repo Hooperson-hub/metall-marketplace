@@ -13,7 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export type ProcessType = 'cutting' | 'welding' | 'bending' | 'painting';
 export type Material = 'steel' | 'aluminum' | 'copper';
 export type UserRole = 'customer' | 'factory';
-export type OrderStatus = 'open' | 'closed';
+export type OrderStatus = 'open' | 'in_progress' | 'completed' | 'closed';
 export type ProposalStatus = 'submitted' | 'accepted' | 'rejected';
 
 export interface Profile {

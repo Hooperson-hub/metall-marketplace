@@ -41,10 +41,14 @@ export function MaterialBadge({ material }: { material: Material }) {
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   const styles: Record<OrderStatus, string> = {
     open: 'bg-emerald-100 text-emerald-700',
+    in_progress: 'bg-amber-100 text-amber-800',
+    completed: 'bg-blue-100 text-blue-700',
     closed: 'bg-slate-200 text-slate-600',
   };
   const labels: Record<OrderStatus, string> = {
-    open: 'Открыт',
+    open: 'Приём предложений',
+    in_progress: 'Исполнитель выбран',
+    completed: 'Выполнен',
     closed: 'Закрыт',
   };
   return (

@@ -134,7 +134,7 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
       })
     );
     if (status === 'accepted') {
-      setOrder((prev) => (prev ? { ...prev, status: 'closed' } : prev));
+      setOrder((prev) => (prev ? { ...prev, status: 'in_progress' } : prev));
     }
   }
 
@@ -149,6 +149,21 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
     }
     setOrder((prev) => prev ? { ...prev, status: 'closed' } : prev);
   }
+
+  async function handleCompleteOrder() {
+    if (!window.confirm('Отметить заказ выполненным?')) return;
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'completed' })
+      .eq('id', orderId);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setOrder((prev) => (prev ? { ...prev, status: 'completed' } : prev));
+  }
+
+  const acceptedProposal = proposals.find((p) => p.status === 'accepted') || null;
 
   if (loading) {
     return (
@@ -204,7 +219,15 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
               onClick={handleCloseOrder}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
             >
-              Закрыть заказ
+              Снять заказ
+            </button>
+          )}
+          {isCustomer && order.status === 'in_progress' && (
+            <button
+              onClick={handleCompleteOrder}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              Заказ выполнен
             </button>
           )}
         </div>
@@ -242,6 +265,31 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
           </div>
         )}
       </div>
+
+      {order.status === 'in_progress' && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+          {isCustomer && (
+            <>
+              Вы выбрали исполнителя
+              {acceptedProposal?.factory
+                ? `: ${acceptedProposal.factory.company_name || acceptedProposal.factory.full_name}`
+                : ''}
+              . Заказ в работе. Когда работа будет выполнена, нажмите «Заказ выполнен».
+            </>
+          )}
+          {isFactory && myProposal?.status === 'accepted' && (
+            <>Заказчик выбрал вас исполнителем. Обсудите детали в чате и приступайте к работе.</>
+          )}
+          {isFactory && myProposal?.status !== 'accepted' && (
+            <>Заказчик выбрал другого исполнителя.</>
+          )}
+        </div>
+      )}
+      {order.status === 'completed' && (
+        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-900">
+          Заказ выполнен.
+        </div>
+      )}
 
       {/* Factory: submit proposal */}
       {isFactory && !myProposal && order.status === 'open' && (
