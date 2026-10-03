@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useHashRoute } from '@/lib/router';
 import { supabase, type OrderWithCount } from '@/lib/supabase';
-import { ProcessBadge, MaterialBadge, OrderStatusBadge, formatDate } from '@/components/Badges';
+import { ProcessBadges, MaterialBadge, OrderStatusBadge, formatDate } from '@/components/Badges';
 import { Plus, Package, FileText, Inbox } from 'lucide-react';
 
 export function CustomerDashboard() {
@@ -83,7 +83,7 @@ export function CustomerDashboard() {
                       <OrderStatusBadge status={order.status} />
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <ProcessBadge type={order.process_type} />
+                      <ProcessBadges order={order} />
                       <MaterialBadge material={order.material} />
                       <span className="text-sm text-slate-500">{order.quantity} шт.</span>
                       <span className="text-sm text-slate-400">·</span>

@@ -10,7 +10,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-export type ProcessType = 'cutting' | 'welding' | 'bending' | 'painting';
+export type ProcessType = 'cutting' | 'bending' | 'welding' | 'painting' | 'installation' | 'machining';
 export type Material = 'steel' | 'aluminum' | 'copper';
 export type UserRole = 'customer' | 'factory';
 export type OrderStatus = 'open' | 'in_progress' | 'completed' | 'closed';
@@ -30,6 +30,8 @@ export interface Order {
   customer_id: string;
   title: string;
   process_type: ProcessType;
+  process_types: ProcessType[];
+  spec: string | null;
   material: Material;
   quantity: number;
   description: string | null;
@@ -71,10 +73,19 @@ export interface OrderWithCount extends Order {
 
 export const PROCESS_LABELS: Record<ProcessType, string> = {
   cutting: 'Лазерная резка',
-  welding: 'Сварка',
   bending: 'Гибка',
+  welding: 'Сварка',
   painting: 'Порошковая покраска',
+  installation: 'Монтаж',
+  machining: 'Токарные и фрезерные работы',
 };
+
+export const PROCESS_ORDER: ProcessType[] = ['cutting', 'bending', 'welding', 'painting', 'installation', 'machining'];
+
+// Список операций заказа (для старых заказов без process_types берём process_type)
+export function orderProcesses(o: { process_type: ProcessType; process_types?: ProcessType[] | null }): ProcessType[] {
+  return o.process_types && o.process_types.length > 0 ? o.process_types : [o.process_type];
+}
 
 export const MATERIAL_LABELS: Record<Material, string> = {
   steel: 'Сталь',

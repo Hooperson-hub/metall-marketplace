@@ -4,6 +4,7 @@ import { useHashRoute } from '@/lib/router';
 import { Navbar, ProtectedRoute } from '@/components/Layout';
 import { LandingPage } from '@/pages/LandingPage';
 import { SignUpPage, SignInPage } from '@/pages/AuthPages';
+import { ForgotPasswordPage, ResetPasswordPage } from '@/pages/PasswordPages';
 import { CustomerDashboard } from '@/pages/CustomerDashboard';
 import { CreateOrderPage } from '@/pages/CreateOrderPage';
 import { FactoryDashboard } from '@/pages/FactoryDashboard';
@@ -22,7 +23,7 @@ const FOOTER_LINKS: { to: string; label: string }[] = [
   { to: '/contacts', label: 'Контакты' },
 ];
 
-const GUEST_PATHS = ['/', '/signin', '/signup', '/signup/customer', '/signup/factory'];
+const GUEST_PATHS = ['/', '/forgot-password', '/signin', '/signup', '/signup/customer', '/signup/factory'];
 
 function Router() {
   const { path, navigate } = useHashRoute();
@@ -46,6 +47,10 @@ function Router() {
   } else if (path === '/signup' || path === '/signup/customer' || path === '/signup/factory') {
     const initialRole = path === '/signup/factory' ? 'factory' : 'customer';
     page = <SignUpPage initialRole={initialRole} />;
+  } else if (path === '/forgot-password') {
+    page = <ForgotPasswordPage />;
+  } else if (path === '/reset-password') {
+    page = <ResetPasswordPage />;
   } else if (path === '/signin') {
     page = <SignInPage />;
   } else if (path === '/dashboard') {

@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useHashRoute } from '@/lib/router';
 import type { UserRole } from '@/lib/supabase';
 import { Factory, ShoppingCart, Check } from 'lucide-react';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export function SignUpPage({ initialRole }: { initialRole?: UserRole }) {
   const { signUp } = useAuth();
@@ -128,10 +129,9 @@ export function SignUpPage({ initialRole }: { initialRole?: UserRole }) {
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Пароль" required>
-              <input
-                type="password"
+              <PasswordInput
                 required
-                minLength={6}
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
@@ -278,15 +278,20 @@ export function SignInPage() {
             />
           </Field>
           <Field label="Пароль" required>
-            <input
-              type="password"
+            <PasswordInput
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input"
               placeholder="Ваш пароль"
+              autoComplete="current-password"
             />
           </Field>
+          <div className="-mt-2 text-right">
+            <button type="button" onClick={() => navigate('/forgot-password')} className="text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline">
+              Забыли пароль?
+            </button>
+          </div>
 
           {error && (
             <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useHashRoute } from '@/lib/router';
 import { supabase } from '@/lib/supabase';
-import { ProcessBadge, MaterialBadge, ProposalStatusBadge, formatDate } from '@/components/Badges';
+import { ProcessBadges, MaterialBadge, ProposalStatusBadge, formatDate } from '@/components/Badges';
 import { FileText, ArrowRight } from 'lucide-react';
 
 interface ProposalWithOrder {
@@ -16,6 +16,7 @@ interface ProposalWithOrder {
     id: string;
     title: string;
     process_type: string;
+    process_types: string[] | null;
     material: string;
     quantity: number;
   } | null;
@@ -34,7 +35,7 @@ export function FactoryProposalsPage() {
         .from('proposals')
         .select(`
           id, price, lead_time_days, comment, status, created_at,
-          order:orders(id, title, process_type, material, quantity)
+          order:orders(id, title, process_type, process_types, material, quantity)
         `)
         .eq('factory_id', profile.id)
         .order('created_at', { ascending: false });
@@ -81,7 +82,7 @@ export function FactoryProposalsPage() {
                     </div>
                     {p.order && (
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <ProcessBadge type={p.order.process_type as 'cutting' | 'welding' | 'bending' | 'painting'} />
+                        <ProcessBadges order={{ process_type: p.order.process_type as ProcessType, process_types: p.order.process_types as ProcessType[] | null }} />
                         <MaterialBadge material={p.order.material as 'steel' | 'aluminum' | 'copper'} />
                         <span className="text-sm text-slate-500">{p.order.quantity} шт.</span>
                       </div>

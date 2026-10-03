@@ -1,10 +1,12 @@
 import type { ProcessType, Material, OrderStatus, ProposalStatus } from '@/lib/supabase';
-import { PROCESS_LABELS, MATERIAL_LABELS } from '@/lib/supabase';
+import { PROCESS_LABELS, MATERIAL_LABELS, orderProcesses } from '@/lib/supabase';
 import {
   Scissors,
   Flame,
   Minimize2,
   Paintbrush,
+  Wrench,
+  Cog,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -13,6 +15,8 @@ export const PROCESS_ICONS: Record<ProcessType, LucideIcon> = {
   welding: Flame,
   bending: Minimize2,
   painting: Paintbrush,
+  installation: Wrench,
+  machining: Cog,
 };
 
 export function ProcessBadge({ type }: { type: ProcessType }) {
@@ -22,6 +26,16 @@ export function ProcessBadge({ type }: { type: ProcessType }) {
       <Icon className="h-3.5 w-3.5" />
       {PROCESS_LABELS[type]}
     </span>
+  );
+}
+
+export function ProcessBadges({ order }: { order: { process_type: ProcessType; process_types?: ProcessType[] | null } }) {
+  return (
+    <>
+      {orderProcesses(order).map((t) => (
+        <ProcessBadge key={t} type={t} />
+      ))}
+    </>
   );
 }
 

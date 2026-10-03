@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useHashRoute, navigateTo } from '@/lib/router';
 import { supabase, type Order, type ProposalWithFactory } from '@/lib/supabase';
 import { calcResponseFee, formatRub, isInsufficientFunds, notifyWalletChanged, useTariffs, useWallet } from '@/lib/wallet';
-import { ProcessBadge, MaterialBadge, OrderStatusBadge, ProposalStatusBadge, formatDate } from '@/components/Badges';
+import { ProcessBadges, MaterialBadge, OrderStatusBadge, ProposalStatusBadge, formatDate } from '@/components/Badges';
 import { FileText, ArrowLeft, Download, Check, X, Send, Clock, User, MessageCircle } from 'lucide-react';
 import { ChatPanel } from '@/components/ChatPanel';
 
@@ -219,7 +219,7 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
               <OrderStatusBadge status={order.status} />
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <ProcessBadge type={order.process_type} />
+              <ProcessBadges order={order} />
               <MaterialBadge material={order.material} />
               <span className="text-sm text-slate-500">{order.quantity} шт.</span>
               <span className="text-sm text-slate-400">·</span>
@@ -274,6 +274,13 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
           <div className="mt-4">
             <h3 className="text-sm font-semibold text-slate-700">Описание</h3>
             <p className="mt-1.5 text-sm text-slate-600">{order.description}</p>
+          </div>
+        )}
+
+        {order.spec && (
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold text-slate-700">Техническое задание</h3>
+            <pre className="mt-1.5 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 font-sans text-sm text-slate-700 ring-1 ring-slate-200">{order.spec}</pre>
           </div>
         )}
       </div>
