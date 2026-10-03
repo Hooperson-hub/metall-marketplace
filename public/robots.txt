@@ -3,3 +3,5 @@ Allow: /
 Disallow: /dashboard
 Disallow: /factory
 Disallow: /orders/
+Disallow: /wallet
+Sitemap: https://hoopersonhub.ru/sitemap.xml

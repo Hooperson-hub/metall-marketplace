@@ -18,6 +18,7 @@ interface SignUpParams {
   companyName: string;
   fullName: string;
   phone?: string;
+  acceptedTermsAt?: string;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  async function signUp({ email, password, role, companyName, fullName, phone }: SignUpParams) {
+  async function signUp({ email, password, role, companyName, fullName, phone, acceptedTermsAt }: SignUpParams) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           company_name: companyName,
           full_name: fullName,
           phone: phone || '',
+          accepted_terms_at: acceptedTermsAt || '',
         },
       },
     });

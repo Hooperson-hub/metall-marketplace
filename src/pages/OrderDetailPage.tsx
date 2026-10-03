@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useHashRoute } from '@/lib/router';
+import { useHashRoute, navigateTo } from '@/lib/router';
 import { supabase, type Order, type ProposalWithFactory } from '@/lib/supabase';
+import { calcResponseFee, formatRub, isInsufficientFunds, notifyWalletChanged, useTariffs, useWallet } from '@/lib/wallet';
 import { ProcessBadge, MaterialBadge, OrderStatusBadge, ProposalStatusBadge, formatDate } from '@/components/Badges';
 import { FileText, ArrowLeft, Download, Check, X, Send, Clock, User, MessageCircle } from 'lucide-react';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -18,6 +19,10 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
 
   // proposal form
   const [price, setPrice] = useState('');
+  const tariffs = useTariffs();
+  const wallet = useWallet();
+  const responseFee = calcResponseFee(parseFloat(price), tariffs);
+  const notEnoughForResponse = responseFee > 0 && wallet.balance !== null && wallet.balance < responseFee;
   const [leadTime, setLeadTime] = useState('');
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -84,6 +89,10 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
     e.preventDefault();
     setError(null);
     if (!profile) return;
+    if (notEnoughForResponse) {
+      setError(`Недостаточно средств на балансе: комиссия за отклик ${formatRub(responseFee)}. Пополните кошелёк.`);
+      return;
+    }
     setSubmitting(true);
     const { error } = await supabase.from('proposals').insert({
       order_id: orderId,
@@ -98,10 +107,13 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
       setError(
         error.code === '23505'
           ? 'Вы уже отправляли предложение по этому заказу — повторно откликнуться нельзя.'
-          : error.message
+          : isInsufficientFunds(error.message)
+            ? 'Недостаточно средств на балансе для отклика. Пополните кошелёк и повторите.'
+            : error.message
       );
       return;
     }
+    notifyWalletChanged();
     // reload proposals
     const { data: propData } = await supabase
       .from('proposals')
@@ -323,6 +335,18 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
                 />
               </div>
             </div>
+            {responseFee > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                Комиссия за отклик: <b>{formatRub(responseFee)}</b> ({tariffs.response_percent}% от цены, не менее{' '}
+                {formatRub(tariffs.response_min_rub)}, не более {formatRub(tariffs.response_max_rub)}). Спишется с баланса при отправке.
+                Ваш баланс: <b>{wallet.balance === null ? '…' : formatRub(wallet.balance)}</b>.{' '}
+                {notEnoughForResponse && (
+                  <button type="button" onClick={() => navigateTo('/wallet')} className="font-semibold text-slate-900 underline">
+                    Пополнить кошелёк
+                  </button>
+                )}
+              </div>
+            )}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Комментарий</label>
               <textarea
@@ -335,11 +359,11 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
             </div>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || notEnoughForResponse}
               className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
-              {submitting ? 'Отправка…' : 'Отправить КП'}
+              {submitting ? 'Отправка…' : responseFee > 0 ? `Отправить КП (комиссия ${formatRub(responseFee)})` : 'Отправить КП'}
             </button>
           </form>
         </div>

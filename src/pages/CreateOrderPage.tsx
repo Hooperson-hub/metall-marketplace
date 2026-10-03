@@ -6,6 +6,7 @@ import { PROCESS_LABELS, MATERIAL_LABELS } from '@/lib/supabase';
 import { supabaseUpload } from '@/components/Layout';
 import { ProcessBadge, MaterialBadge } from '@/components/Badges';
 import { Upload, File, X, Sparkles, Check } from 'lucide-react';
+import { formatRub, isInsufficientFunds, notifyWalletChanged, useNextOrderFee, useTariffs, useWallet } from '@/lib/wallet';
 
 const PROCESS_OPTIONS: ProcessType[] = ['cutting', 'welding', 'bending', 'painting'];
 const MATERIAL_OPTIONS: Material[] = ['steel', 'aluminum', 'copper'];
@@ -15,6 +16,10 @@ export function CreateOrderPage() {
   const { profile } = useAuth();
   const { navigate } = useHashRoute();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tariffs = useTariffs();
+  const { balance } = useWallet();
+  const { fee, freeLeft } = useNextOrderFee(tariffs);
+  const notEnough = fee !== null && fee > 0 && balance !== null && balance < fee;
 
   const [title, setTitle] = useState('');
   const [processType, setProcessType] = useState<ProcessType>('cutting');
@@ -57,6 +62,10 @@ export function CreateOrderPage() {
     e.preventDefault();
     setError(null);
     if (!profile) return;
+    if (notEnough && fee !== null) {
+      setError(`Недостаточно средств на балансе: размещение стоит ${formatRub(fee)}. Пополните кошелёк.`);
+      return;
+    }
     setSubmitting(true);
 
     let drawingUrl: string | null = null;
@@ -95,9 +104,14 @@ export function CreateOrderPage() {
     setSubmitting(false);
 
     if (insErr) {
-      setError('Ошибка создания заказа: ' + insErr.message);
+      setError(
+        isInsufficientFunds(insErr.message)
+          ? 'Недостаточно средств на балансе для размещения заказа. Пополните кошелёк и повторите.'
+          : 'Ошибка создания заказа: ' + insErr.message
+      );
       return;
     }
+    notifyWalletChanged();
 
     navigate(`/orders/${orderData.id}`);
   }
@@ -242,6 +256,34 @@ export function CreateOrderPage() {
           <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
+        {fee !== null && (
+          <div
+            className={`rounded-xl border px-4 py-3 text-sm ${
+              fee === 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-slate-50 text-slate-700'
+            }`}
+          >
+            {fee === 0 ? (
+              <>
+                Размещение этой заявки <b>бесплатно</b>
+                {freeLeft !== null ? ` (бесплатных заявок осталось: ${freeLeft})` : ''}.
+              </>
+            ) : (
+              <>
+                Размещение заявки: <b>{formatRub(fee)}</b>, спишется с баланса при публикации. Ваш баланс:{' '}
+                <b>{balance === null ? '…' : formatRub(balance)}</b>.{' '}
+                {notEnough && (
+                  <button type="button" onClick={() => navigate('/wallet')} className="font-semibold text-slate-900 underline">
+                    Пополнить кошелёк
+                  </button>
+                )}
+                <span className="mt-1 block text-xs text-slate-500">
+                  Если вы снимете заявку до получения первого КП, плата вернётся на баланс.
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Submit */}
         <div className="flex gap-3">
           <button
@@ -253,10 +295,10 @@ export function CreateOrderPage() {
           </button>
           <button
             type="submit"
-            disabled={submitting || uploading}
+            disabled={submitting || uploading || notEnough}
             className="flex-1 rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
           >
-            {uploading ? 'Загрузка файла…' : submitting ? 'Создание…' : 'Опубликовать заказ'}
+            {uploading ? 'Загрузка файла…' : submitting ? 'Создание…' : fee && fee > 0 ? `Опубликовать за ${formatRub(fee)}` : 'Опубликовать заказ'}
           </button>
         </div>
       </form>

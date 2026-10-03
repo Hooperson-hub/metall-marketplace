@@ -17,13 +17,26 @@ export function SignUpPage({ initialRole }: { initialRole?: UserRole }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [agree, setAgree] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!agree) {
+      setError('Для регистрации необходимо принять условия соглашения и дать согласие на обработку персональных данных');
+      return;
+    }
     setSubmitting(true);
     try {
-      const { error, needsEmailConfirmation } = await signUp({ email, password, role, companyName, fullName, phone });
+      const { error, needsEmailConfirmation } = await signUp({
+        email,
+        password,
+        role,
+        companyName,
+        fullName,
+        phone,
+        acceptedTermsAt: new Date().toISOString(),
+      });
       if (error) {
         setError(error);
       } else if (needsEmailConfirmation) {
@@ -135,6 +148,30 @@ export function SignUpPage({ initialRole }: { initialRole?: UserRole }) {
               />
             </Field>
           </div>
+
+          <label className="flex items-start gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            />
+            <span>
+              Я принимаю{' '}
+              <button type="button" onClick={() => navigate('/terms')} className="font-semibold text-slate-900 underline">
+                пользовательское соглашение
+              </button>
+              , ознакомлен(а) с{' '}
+              <button type="button" onClick={() => navigate('/privacy')} className="font-semibold text-slate-900 underline">
+                политикой конфиденциальности
+              </button>{' '}
+              и даю{' '}
+              <button type="button" onClick={() => navigate('/consent')} className="font-semibold text-slate-900 underline">
+                согласие на обработку персональных данных
+              </button>
+              .
+            </span>
+          </label>
 
           {error && (
             <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>

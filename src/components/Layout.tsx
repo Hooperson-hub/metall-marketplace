@@ -2,7 +2,8 @@ import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useHashRoute } from '@/lib/router';
 import { supabase } from '@/lib/supabase';
-import { Factory, LogOut, User, Plus, LayoutDashboard, FileText } from 'lucide-react';
+import { Factory, LogOut, User, Plus, LayoutDashboard, FileText, Wallet } from 'lucide-react';
+import { formatRub, useWallet } from '@/lib/wallet';
 import { NotificationBell } from '@/components/NotificationBell';
 
 export function Navbar() {
@@ -47,6 +48,7 @@ export function Navbar() {
                 </NavButton>
               </>
             )}
+            <WalletChip />
             <NotificationBell />
             <div className="mx-1 hidden items-center gap-2 rounded-lg px-3 py-1.5 sm:flex">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
@@ -83,6 +85,23 @@ export function Navbar() {
         )}
       </div>
     </header>
+  );
+}
+
+function WalletChip() {
+  const { balance } = useWallet();
+  const { navigate, path } = useHashRoute();
+  return (
+    <button
+      onClick={() => navigate('/wallet')}
+      title="Кошелёк"
+      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium transition hover:bg-slate-100 ${
+        path === '/wallet' ? 'bg-slate-100 text-slate-900' : 'text-slate-600'
+      }`}
+    >
+      <Wallet className="h-4 w-4" />
+      <span>{balance === null ? '…' : formatRub(balance)}</span>
+    </button>
   );
 }
 
