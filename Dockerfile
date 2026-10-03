@@ -9,7 +9,7 @@ COPY . .
 # Адрес "/supabase" означает прокси на нашем домене (настроен в nginx.conf).
 ENV VITE_SUPABASE_URL=/supabase
 # ВСТАВЬТЕ вместо слов ниже ключ "anon public" из Supabase (Project Settings → API). Не ключ service_role!
-ENV VITE_SUPABASE_ANON_KEY=ВСТАВЬТЕ_СЮДА_ANON_PUBLIC_КЛЮЧ
+ENV VITE_SUPABASE_ANON_KEY=sb_publishable_C-TnUTsSJV5HVunVC0i0hg_2BYhmlSK
 RUN npm run build
 
 # Этап 2: раздача готовых файлов
