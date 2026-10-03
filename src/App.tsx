@@ -5,6 +5,7 @@ import { Navbar, ProtectedRoute } from '@/components/Layout';
 import { LandingPage } from '@/pages/LandingPage';
 import { SignUpPage, SignInPage } from '@/pages/AuthPages';
 import { ForgotPasswordPage, ResetPasswordPage } from '@/pages/PasswordPages';
+import { ConfirmPage } from '@/pages/ConfirmPage';
 import { CustomerDashboard } from '@/pages/CustomerDashboard';
 import { CreateOrderPage } from '@/pages/CreateOrderPage';
 import { FactoryDashboard } from '@/pages/FactoryDashboard';
@@ -47,6 +48,8 @@ function Router() {
   } else if (path === '/signup' || path === '/signup/customer' || path === '/signup/factory') {
     const initialRole = path === '/signup/factory' ? 'factory' : 'customer';
     page = <SignUpPage initialRole={initialRole} />;
+  } else if (path === '/auth/confirm') {
+    page = <ConfirmPage />;
   } else if (path === '/forgot-password') {
     page = <ForgotPasswordPage />;
   } else if (path === '/reset-password') {

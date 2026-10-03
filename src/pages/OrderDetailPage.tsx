@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useHashRoute, navigateTo } from '@/lib/router';
-import { supabase, type Order, type ProposalWithFactory } from '@/lib/supabase';
+import { supabase, fixFileUrl, type Order, type ProposalWithFactory } from '@/lib/supabase';
 import { calcResponseFee, formatRub, isInsufficientFunds, notifyWalletChanged, useTariffs, useWallet } from '@/lib/wallet';
 import { ProcessBadges, MaterialBadge, OrderStatusBadge, ProposalStatusBadge, formatDate } from '@/components/Badges';
 import { FileText, ArrowLeft, Download, Check, X, Send, Clock, User, MessageCircle } from 'lucide-react';
@@ -257,7 +257,7 @@ export function OrderDetailPage({ orderId, initialChatFactoryId }: { orderId: st
         {order.drawing_url && (
           <div className="mt-4">
             <a
-              href={order.drawing_url}
+              href={fixFileUrl(order.drawing_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"

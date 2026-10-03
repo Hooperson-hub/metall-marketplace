@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+// Адрес Supabase. Значение вида "/supabase" означает прокси на нашем же домене
+// (nginx передаёт запросы в Supabase), это нужно, чтобы сайт работал в России без VPN.
+const rawSupabaseUrl = String(import.meta.env.VITE_SUPABASE_URL ?? '');
+const supabaseUrl = rawSupabaseUrl.startsWith('/') ? window.location.origin + rawSupabaseUrl : rawSupabaseUrl;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -9,6 +12,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
   },
 });
+
+// Ссылки на файлы, сохранённые раньше, ведут на *.supabase.co (без VPN из России он недоступен).
+// Если сайт работает через свой прокси-адрес, подменяем хост на прокси.
+export function fixFileUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  const base = String(supabaseUrl ?? '').replace(/\/$/, '');
+  if (!base) return url;
+  return url.replace(/^https:\/\/[a-z0-9]+\.supabase\.co/i, base);
+}
 
 export type ProcessType = 'cutting' | 'bending' | 'welding' | 'painting' | 'installation' | 'machining';
 export type Material = 'steel' | 'aluminum' | 'copper';
